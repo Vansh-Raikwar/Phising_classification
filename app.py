@@ -10,19 +10,26 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return jsonify("home")
+    return render_template('index.html')
 
 
-@app.route("/train")
-def train_route():
-    try:
-        train_pipeline = TrainingPipeline()
-        train_pipeline.run_pipeline()
+# @app.route("/train")
+# def train_route():
+#     try:
 
-        return "Training Completed."
+        
+#         train_pipeline = TrainingPipeline()
+#         train_file_detail = train_pipeline.run_pipeline()
 
-    except Exception as e:
-        raise CustomException(e,sys)
+#         lg.info("Training completed. Downloading training file.")
+#         return send_file(train_file_detail,
+#                         download_name= "model.pkl",
+#                         as_attachment= True)
+#         # return render_template('train.html')
+#         # return "Training Completed."
+
+#     except Exception as e:
+#         raise CustomException(e,sys)
 
 @app.route('/predict', methods=['POST', 'GET'])
 def predict():
@@ -46,4 +53,8 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug= True)
+    host = "127.0.0.1"
+    port = 5000
+    
+    print(f"App is running on : http://{host}:{port}")
+    app.run(host=host, port=port, debug= True)

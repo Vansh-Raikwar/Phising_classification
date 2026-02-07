@@ -223,9 +223,19 @@ class ModelTrainer:
                 obj=custom_model,
             )
 
-            self.utils.upload_file(from_filename=self.model_trainer_config.trained_model_path,
-                                   to_filename="model.pkl",
-                                   bucket_name=AWS_S3_BUCKET_NAME)
+            # Copy to project root for local prediction fallback
+            logging.info(f"Copying model to project root: model.pkl")
+            import shutil
+            shutil.copy(self.model_trainer_config.trained_model_path, "model.pkl")
+
+            try:
+                logging.info(f"Attempting to upload model to S3 bucket: {AWS_S3_BUCKET_NAME}")
+                self.utils.upload_file(from_filename=self.model_trainer_config.trained_model_path,
+                                       to_filename="model.pkl",
+                                       bucket_name=AWS_S3_BUCKET_NAME)
+                logging.info("Model uploaded to S3 successfully.")
+            except Exception as e:
+                logging.warning(f"S3 Upload failed: {str(e)}. Training completed locally.")
 
             return best_model_score
 

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Model - Phishing Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -250px;
+            right: -250px;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            bottom: -200px;
+            left: -200px;
+            animation: float 15s infinite ease-in-out reverse;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: rise linear infinite;
+        }
+
+        .particle:nth-child(1) {
+            width: 8px;
+            height: 8px;
+            left: 10%;
+            animation-duration: 8s;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            width: 6px;
+            height: 6px;
+            left: 25%;
+            animation-duration: 10s;
+            animation-delay: 2s;
+        }
+
+        .particle:nth-child(3) {
+            width: 10px;
+            height: 10px;
+            left: 40%;
+            animation-duration: 12s;
+            animation-delay: 4s;
+        }
+
+        .particle:nth-child(4) {
+            width: 7px;
+            height: 7px;
+            left: 60%;
+            animation-duration: 9s;
+            animation-delay: 1s;
+        }
+
+        .particle:nth-child(5) {
+            width: 9px;
+            height: 9px;
+            left: 75%;
+            animation-duration: 11s;
+            animation-delay: 3s;
+        }
+
+        .particle:nth-child(6) {
+            width: 6px;
+            height: 6px;
+            left: 90%;
+            animation-duration: 13s;
+            animation-delay: 5s;
+        }
+
+        @keyframes rise {
+            0% {
+                bottom: -50px;
+                opacity: 0;
+                transform: translateX(0) rotate(0deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateX(50px) rotate(180deg);
+            }
+            100% {
+                bottom: 110vh;
+                opacity: 0;
+                transform: translateX(0) rotate(360deg);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                transform: translate(50px, 50px) scale(1.1);
+            }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 50px 45px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 550px;
+            width: 90%;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .header {
+            margin-bottom: 35px;
+            text-align: center;
+        }
+
+        .icon-wrapper {
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            animation: iconBounce 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .icon-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            opacity: 0;
+            animation: ripple 2s ease-out infinite;
+        }
+
+        @keyframes iconBounce {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-5px) rotate(-2deg);
+            }
+            75% {
+                transform: translateY(-3px) rotate(2deg);
+            }
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .icon-wrapper svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            animation: fadeInDown 0.8s ease-out 0.2s backwards;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 15px;
+            font-weight: 400;
+            animation: fadeInDown 0.8s ease-out 0.4s backwards;
+        }
+
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 20px auto 30px;
+            border-radius: 2px;
+            animation: expandWidth 0.8s ease-out 0.6s backwards;
+        }
+
+        @keyframes expandWidth {
+            from {
+                width: 0;
+                opacity: 0;
+            }
+            to {
+                width: 60px;
+                opacity: 1;
+            }
+        }
+
+        .dropzone-wrapper {
+            margin-bottom: 25px;
+            animation: slideInLeft 0.6s ease-out 0.8s backwards;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .dropzone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 16px;
+            padding: 50px 30px;
+            text-align: center;
+            background: #f7fafc;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .dropzone:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .dropzone.dragover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            transform: scale(1.02);
+        }
+
+        .upload-icon-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-icon {
+            width: 30px;
+            height: 30px;
+            filter: brightness(0) invert(1);
+        }
+
+        .dropzone-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .dropzone-text {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .dropzone-text .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .upload-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-info {
+            background: #edf2f7;
+            border: 2px solid #cbd5e0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info.active {
+            display: flex;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .file-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .file-size {
+            color: #718096;
+            font-size: 13px;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .remove-file:hover {
+            background: #fed7d7;
+            transform: scale(1.1);
+        }
+
+        .btn {
+            width: 100%;
+            position: relative;
+            padding: 16px 30px;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            animation: slideInRight 0.6s ease-out 1s backwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #a0aec0;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 25px;
+            animation: fadeInUp 0.6s ease-out 1.2s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #764ba2;
+            transform: translateX(-3px);
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .dropzone {
+                padding: 40px 25px;
+            }
+
+            .dropzone-title {
+                font-size: 18px;
+            }
+
+            .btn {
+                font-size: 16px;
+                padding: 15px 28px;
+            }
+
+            .icon-wrapper {
+                width: 75px;
+                height: 75px;
+            }
+
+            .icon-wrapper svg {
+                width: 42px;
+                height: 42px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                </svg>
+            </div>
+            <h1>Train Model</h1>
+            <p class="subtitle">Upload CSV to enhance detection accuracy</p>
+            <div class="divider"></div>
+        </div>
+
+        <form action="/train" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div class="dropzone-wrapper">
+                <div class="dropzone" id="dropzone">
+                    <div class="upload-icon-container">
+                        <img src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" alt="Upload" />
+                    </div>
+                    <div class="dropzone-title">Drop file to upload</div>
+                    <p class="dropzone-text">
+                        or <span class="highlight">browse</span> to choose a file
+                    </p>
+                    <input type="file" class="upload-input" name="file" accept=".csv" id="fileInput">
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                </div>
+                <div class="file-details">
+                    <div class="file-name" id="fileName">filename.csv</div>
+                    <div class="file-size" id="fileSize">0 KB</div>
+                </div>
+                <button type="button" class="remove-file" id="removeFile" title="Remove file">×</button>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn" disabled>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>Upload & Train</span>
+            </button>
+        </form>
+
+        <div class="back-link">
+            <a href="/">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFile = document.getElementById('removeFile');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone when dragging over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Handle dropped files
+        dropzone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        }, false);
+
+        // Handle file input change
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check if file is CSV
+                if (!file.name.endsWith('.csv')) {
+                    alert('Please upload a CSV file');
+                    return;
+                }
+
+                // Display file info
+                fileName.textContent = file.name;
+                fileSize.textContent = formatBytes(file.size);
+                fileInfo.classList.add('active');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Remove file
+        removeFile.addEventListener('click', () => {
+            fileInput.value = '';
+            fileInfo.classList.remove('active');
+            submitBtn.disabled = true;
+        });
+
+        // Format bytes to readable size
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

@@ -3,3 +3,4 @@ artifacts
 logs
 .pyc
 pyc
+.venv

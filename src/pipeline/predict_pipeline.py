@@ -43,15 +43,24 @@ class PredictionPipeline:
         """
 
         try:
-            pred_file_input_dir = "prediction_artifacts"
+            pred_file_input_dir = os.path.join("prediction_artifacts")
             os.makedirs(pred_file_input_dir, exist_ok=True)
 
             input_csv_file = self.request.files['file']
-            pred_file_path = os.path.join(pred_file_input_dir, input_csv_file.filename)
+            filename = input_csv_file.filename
+            if filename == '':
+                filename = "input_file.csv"
             
+            pred_file_path = os.path.join(pred_file_input_dir, filename)
             
+            logging.info(f"Saving input file to: {pred_file_path}")
             input_csv_file.save(pred_file_path)
-
+            
+            file_size = os.path.getsize(pred_file_path)
+            logging.info(f"Saved file size: {file_size} bytes")
+            
+            if file_size == 0:
+                raise Exception(f"Uploaded file {filename} is empty.")
 
             return pred_file_path
         except Exception as e:
@@ -59,11 +68,23 @@ class PredictionPipeline:
 
     def predict(self, features):
             try:
-                model_path = self.utils.download_model(
-                    bucket_name=AWS_S3_BUCKET_NAME,
-                    bucket_file_name="model.pkl",
-                    dest_file_name="model.pkl",
-                )
+                model_path = "model.pkl"
+                try:
+                    logging.info("Attempting to download model from S3...")
+                    model_path = self.utils.download_model(
+                        bucket_name=AWS_S3_BUCKET_NAME,
+                        bucket_file_name="model.pkl",
+                        dest_file_name="model.pkl",
+                    )
+                    logging.info("Model downloaded successfully from S3.")
+                except Exception as s3_error:
+                    logging.warning(f"S3 Download failed: {str(s3_error)}. Checking for local model fallback.")
+                    if os.path.exists("model.pkl"):
+                        logging.info("Found local model.pkl. Proceeding with local model.")
+                        model_path = "model.pkl"
+                    else:
+                        logging.error("Neither S3 model nor local model.pkl found.")
+                        raise Exception("Model not found in S3 and no local model.pkl available.") from s3_error
 
                 model = self.utils.load_object(file_path=model_path)
 
@@ -74,7 +95,7 @@ class PredictionPipeline:
             except Exception as e:
                 raise CustomException(e, sys)
         
-    def get_predicted_dataframe(self, input_dataframe_path:pd.DataFrame):
+    def get_predicted_dataframe(self, input_dataframe_path:str):
 
         """
             Method Name :   get_predicted_dataframe
@@ -91,7 +112,18 @@ class PredictionPipeline:
         try:
 
             prediction_column_name : str = TARGET_COLUMN
+            
+            logging.info(f"Reading CSV from: {input_dataframe_path}")
+            if not os.path.exists(input_dataframe_path):
+                raise Exception(f"File not found: {input_dataframe_path}")
+                
+            file_size = os.path.getsize(input_dataframe_path)
+            logging.info(f"File size before reading: {file_size} bytes")
+            
             input_dataframe: pd.DataFrame = pd.read_csv(input_dataframe_path)
+            
+            if input_dataframe.empty:
+                 raise Exception(f"Dataframe is empty after reading {input_dataframe_path}")
             
             predictions = self.predict(input_dataframe)
             input_dataframe[prediction_column_name] = [pred for pred in predictions]

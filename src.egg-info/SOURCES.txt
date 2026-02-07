@@ -16,7 +16,7 @@ src/configuration/__init__.py
 src/configuration/mongo_db_connection.py
 src/constant/__init__.py
 src/data_access/__init__.py
-src/data_access/phishing_data.py
+src/data_access/phising_data.py
 src/pipeline/__init__.py
 src/pipeline/predict_pipeline.py
 src/pipeline/train_pipeline.py

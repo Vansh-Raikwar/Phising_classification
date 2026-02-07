@@ -6,7 +6,7 @@ import os
 import shutil
 import json
 
-from env.Lib.pathlib import Path
+from pathlib import Path
 from src.constant import *
 from src.exception import CustomException
 from src.logger import logging
@@ -186,7 +186,7 @@ class DataValidation:
         try:
             os.makedirs(dest_path, exist_ok=True)
             if os.path.basename(src_path) not in os.listdir(dest_path):
-                shutil.move(src_path, dest_path)
+                shutil.copy(src_path, dest_path)
         except Exception as e:
             raise CustomException(e, sys)
 
