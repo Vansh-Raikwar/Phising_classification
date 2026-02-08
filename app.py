@@ -19,14 +19,14 @@ def train_route():
 
         
         train_pipeline = TrainingPipeline()
-        train_file_detail = train_pipeline.run_pipeline()
+        model_path = train_pipeline.run_pipeline()
 
-        lg.info("Training completed. Downloading training file.")
-        return send_file(train_file_detail,
-                        download_name= "model.pkl",
-                        as_attachment= True)
-        # return render_template('train.html')
-        # return "Training Completed."
+        lg.info(f"Training completed. Model saved at {model_path}")
+        return jsonify({
+            "status": "success",
+            "message": "Model trained successfully and saved on server.",
+            "model_path": model_path
+        })
 
     except Exception as e:
         error = CustomException(e, sys)
