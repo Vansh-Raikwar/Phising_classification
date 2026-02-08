@@ -77,14 +77,20 @@ class DataValidation:
         """
         try:
 
-            file_name = os.path.basename(file_path)
-            regex = "['phising']+['\_'']+[\d_]+[\d]+\.csv"
+            file_name = os.path.basename(file_path).lower()
+            regex = r"^phising.*\.csv$"
 
             if re.match(regex, file_name):
-                splitAtDot = re.split('.csv', file_name)
-                splitAtDot = (re.split('_', splitAtDot[0]))
-                filename_validation_status = len(splitAtDot[1]) == length_of_date_stamp and len(
-                    splitAtDot[2]) == length_of_time_stamp
+                # Split the filename to see if it follows the timestamp pattern
+                # Expected format: phising_ddmmyyyy_hhmmss.csv
+                parts = file_name.replace(".csv", "").split('_')
+                if len(parts) == 3:
+                     # If it has 3 parts, validate lengths
+                     filename_validation_status = (len(parts[1]) == length_of_date_stamp and 
+                                                   len(parts[2]) == length_of_time_stamp)
+                else:
+                    # If it doesn't have 3 parts, allow it anyway as long as it starts with 'phising'
+                    filename_validation_status = True
             else:
                 filename_validation_status = False
 

@@ -13,23 +13,23 @@ def home():
     return render_template('index.html')
 
 
-# @app.route("/train")
-# def train_route():
-#     try:
+@app.route("/train")
+def train_route():
+    try:
 
         
-#         train_pipeline = TrainingPipeline()
-#         train_file_detail = train_pipeline.run_pipeline()
+        train_pipeline = TrainingPipeline()
+        train_file_detail = train_pipeline.run_pipeline()
 
-#         lg.info("Training completed. Downloading training file.")
-#         return send_file(train_file_detail,
-#                         download_name= "model.pkl",
-#                         as_attachment= True)
-#         # return render_template('train.html')
-#         # return "Training Completed."
+        lg.info("Training completed. Downloading training file.")
+        return send_file(train_file_detail,
+                        download_name= "model.pkl",
+                        as_attachment= True)
+        # return render_template('train.html')
+        # return "Training Completed."
 
-#     except Exception as e:
-#         raise CustomException(e,sys)
+    except Exception as e:
+        raise CustomException(e,sys)
 
 @app.route('/predict', methods=['POST', 'GET'])
 def predict():

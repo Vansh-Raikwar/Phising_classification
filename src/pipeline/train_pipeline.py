@@ -54,7 +54,7 @@ class TrainingPipeline:
                 y_test,
                 preprocessor_path)
 
-            return model_score
+            return model_score, model_trainer.model_trainer_config.trained_model_path
 
         except Exception as e:
             raise CustomException(e, sys)
@@ -64,9 +64,10 @@ class TrainingPipeline:
             raw_data_dir = self.start_data_ingestion()
             valid_data_dir = self.start_data_validation(raw_data_dir)
             x_train, y_train, x_test, y_test, preprocessor_path = self.start_data_transformation(valid_data_dir)
-            r2_square = self.start_model_training(x_train, y_train, x_test, y_test, preprocessor_path)
+            model_score, model_path = self.start_model_training(x_train, y_train, x_test, y_test, preprocessor_path)
 
-            print("training completed. Trained model score : ", r2_square)
+            print("training completed. Trained model score : ", model_score)
+            return model_path
 
         except Exception as e:
             raise CustomException(e, sys)
