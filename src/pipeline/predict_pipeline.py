@@ -67,33 +67,38 @@ class PredictionPipeline:
             raise CustomException(e,sys)
 
     def predict(self, features):
+        try:
+            model_path = "model.pkl"
             try:
-                model_path = "model.pkl"
-                try:
-                    logging.info("Attempting to download model from S3...")
-                    model_path = self.utils.download_model(
-                        bucket_name=AWS_S3_BUCKET_NAME,
-                        bucket_file_name="model.pkl",
-                        dest_file_name="model.pkl",
-                    )
-                    logging.info("Model downloaded successfully from S3.")
-                except Exception as s3_error:
-                    logging.warning(f"S3 Download failed: {str(s3_error)}. Checking for local model fallback.")
-                    if os.path.exists("model.pkl"):
-                        logging.info("Found local model.pkl. Proceeding with local model.")
-                        model_path = "model.pkl"
-                    else:
-                        logging.error("Neither S3 model nor local model.pkl found.")
-                        raise Exception("Model not found in S3 and no local model.pkl available.") from s3_error
+                logging.info("Attempting to download model from S3...")
+                model_path = self.utils.download_model(
+                    bucket_name=AWS_S3_BUCKET_NAME,
+                    bucket_file_name="model.pkl",
+                    dest_file_name="model.pkl",
+                )
+                logging.info("Model downloaded successfully from S3.")
+            except Exception as s3_error:
+                logging.warning(f"S3 Download failed: {str(s3_error)}. Checking for local model fallback.")
+                if os.path.exists("model.pkl"):
+                    logging.info("Found local model.pkl. Proceeding with local model.")
+                    model_path = "model.pkl"
+                else:
+                    logging.error("Neither S3 model nor local model.pkl found.")
+                    raise Exception("Model not found in S3 and no local model.pkl available.") from s3_error
 
-                model = self.utils.load_object(file_path=model_path)
+            logging.info(f"Loading model from: {model_path}")
+            model = self.utils.load_object(file_path=model_path)
+            logging.info(f"Model loaded successfully. Model type: {type(model)}")
 
-                preds = model.predict(features)
+            logging.info(f"Input features shape: {features.shape}")
+            preds = model.predict(features)
+            logging.info(f"Prediction successful. Preds count: {len(preds)}")
 
-                return preds
+            return preds
 
-            except Exception as e:
-                raise CustomException(e, sys)
+        except Exception as e:
+            logging.error(f"Error during prediction: {str(e)}")
+            raise CustomException(e, sys)
         
     def get_predicted_dataframe(self, input_dataframe_path:str):
 
@@ -125,6 +130,7 @@ class PredictionPipeline:
             if input_dataframe.empty:
                  raise Exception(f"Dataframe is empty after reading {input_dataframe_path}")
             
+            logging.info(f"DataFrame columns: {input_dataframe.columns.tolist()}")
             predictions = self.predict(input_dataframe)
             input_dataframe[prediction_column_name] = [pred for pred in predictions]
             target_column_mapping = {0:'phising', 1:'safe'}
@@ -133,11 +139,10 @@ class PredictionPipeline:
             
             os.makedirs( self.prediction_file_detail.prediction_output_dirname, exist_ok= True)
             input_dataframe.to_csv(self.prediction_file_detail.prediction_file_path, index= False)
-            logging.info("predictions completed. ")
-
-
+            logging.info(f"Predictions saved to: {self.prediction_file_detail.prediction_file_path}")
 
         except Exception as e:
+            logging.error(f"Error in get_predicted_dataframe: {str(e)}")
             raise CustomException(e, sys) from e
         
 
