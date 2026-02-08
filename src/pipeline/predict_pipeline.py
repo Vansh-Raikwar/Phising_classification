@@ -69,22 +69,21 @@ class PredictionPipeline:
     def predict(self, features):
         try:
             model_path = "model.pkl"
-            try:
-                logging.info("Attempting to download model from S3...")
-                model_path = self.utils.download_model(
-                    bucket_name=AWS_S3_BUCKET_NAME,
-                    bucket_file_name="model.pkl",
-                    dest_file_name="model.pkl",
-                )
-                logging.info("Model downloaded successfully from S3.")
-            except Exception as s3_error:
-                logging.warning(f"S3 Download failed: {str(s3_error)}. Checking for local model fallback.")
-                if os.path.exists("model.pkl"):
-                    logging.info("Found local model.pkl. Proceeding with local model.")
-                    model_path = "model.pkl"
-                else:
-                    logging.error("Neither S3 model nor local model.pkl found.")
-                    raise Exception("Model not found in S3 and no local model.pkl available.") from s3_error
+            
+            if os.path.exists(model_path):
+                logging.info(f"Found local {model_path}. Using it for prediction.")
+            else:
+                try:
+                    logging.info("Local model not found. Attempting to download from S3...")
+                    model_path = self.utils.download_model(
+                        bucket_name=AWS_S3_BUCKET_NAME,
+                        bucket_file_name="model.pkl",
+                        dest_file_name="model.pkl",
+                    )
+                    logging.info("Model downloaded successfully from S3.")
+                except Exception as s3_error:
+                    logging.error(f"S3 Download failed and no local model found: {str(s3_error)}")
+                    raise Exception("Model not found locally or in S3.") from s3_error
 
             logging.info(f"Loading model from: {model_path}")
             model = self.utils.load_object(file_path=model_path)

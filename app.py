@@ -13,7 +13,7 @@ def home():
     return render_template('index.html')
 
 
-@app.route("/train")
+@app.route("/train", methods=['GET', 'POST'])
 def train_route():
     try:
 
