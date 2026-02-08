@@ -29,7 +29,9 @@ def train_route():
         # return "Training Completed."
 
     except Exception as e:
-        raise CustomException(e,sys)
+        error = CustomException(e, sys)
+        lg.error(error.error_message)
+        return jsonify({"error": str(e), "message": error.error_message}), 500
 
 @app.route('/predict', methods=['POST', 'GET'])
 def predict():
@@ -48,7 +50,9 @@ def predict():
             return render_template('prediction.html')
 
     except Exception as e:
-        raise CustomException(e,sys)
+        error = CustomException(e, sys)
+        lg.error(error.error_message)
+        return jsonify({"error": str(e), "message": error.error_message}), 500
     
 
 
