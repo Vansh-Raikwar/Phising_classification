@@ -11,6 +11,9 @@ from src.exception import CustomException
 import os
 
 
+import certifi
+ca = certifi.where()
+
 class PhisingData:
     """
     This class help to export entire mongo db record as pandas dataframe
@@ -29,25 +32,25 @@ class PhisingData:
             raise CustomException(e, sys)
 
     def get_collection_names(self) -> List:
-
-        mongo_db_client = MongoClient(self.mongo_url)
-        collection_names = mongo_db_client[self.database_name].list_collection_names()
-        return collection_names
+        try:
+            mongo_db_client = MongoDBClient(database_name=self.database_name)
+            collection_names = mongo_db_client.database.list_collection_names()
+            return collection_names
+        except Exception as e:
+            raise CustomException(e, sys)
 
     def get_collection_data(self,
                             collection_name: str) -> pd.DataFrame:
+        try:
+            mongo_db_client = MongoDBClient(database_name=self.database_name)
+            df = pd.DataFrame(list(mongo_db_client.database[collection_name].find()))
 
-        mongo_connection = mongo(
-            client_url=self.mongo_url,
-            database_name=self.database_name,
-            collection_name=collection_name
-        )
-        df = mongo_connection.find()
-
-        if "_id" in df.columns.to_list():
-            df = df.drop(columns=["_id"])
-        df = df.replace({"na": np.nan})
-        return df
+            if not df.empty and "_id" in df.columns.to_list():
+                df = df.drop(columns=["_id"])
+            df = df.replace({"na": np.nan})
+            return df
+        except Exception as e:
+            raise CustomException(e, sys)
 
     def export_collections_as_dataframe(
             self) -> pd.DataFrame:
