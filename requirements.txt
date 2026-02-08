@@ -19,7 +19,7 @@ types-s3transfer==0.6.0.post4
 uvicorn>=0.30.0
 watchfiles==0.17.0
 websockets>=13.0
-xgboost==1.6.2
+xgboost>=2.0.0
 neuro-mf==0.0.5
 boto3==1.26.105
 numpy>=1.26.4
@@ -27,4 +27,5 @@ scikit-learn>=1.5.2
 PyYAML>=6.0.1
 gunicorn
 waitress
+setuptools
 -e .
